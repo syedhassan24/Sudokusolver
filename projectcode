@@ -1,0 +1,152 @@
+## Syedhassan 
+##Project code
+##sudoku solve 9x9
+##date:7/22/2017
+.data
+.align 4
+
+sudkou:.byte 0,0,0,0,0,0,0,0,0              ##input the sudkou you want to solve and replacing the missing number with zero
+       .byte 0,0,0,0,0,0,0,0,0
+       .byte 0,0,0,0,0,0,0,0,0
+       .byte 0,0,0,0,0,0,0,0,0
+       .byte 0,0,0,0,0,0,0,0,0
+       .byte 0,0,0,0,0,0,0,0,0
+       .byte 0,0,0,0,0,0,0,0,0
+       .byte 0,0,0,0,0,0,0,0,0
+       .byte 0,0,0,0,0,0,0,0,0
+seperator: .asciiz "--------------"    ##seperating rows
+new: .asciiz"/n"
+message: .asciiz "no solutiion"   #if there is no solution
+.text
+main:
+li,$a0,0 #first cell of the sudkou
+jal input #go to the function input 
+beq $v0,$zero,branch #if the computer can't solve it then it leaves a message and then exit
+jal update   #if there is a solution then computer prints the updated sudoku
+branch:
+la $a0,message
+li $v0,4
+syscall   #exits the function
+j exit
+input:
+addi $sp,$sp,-12 #creattes a stack for the return address since the function is a recursive function
+sw $s2,8($sp)
+sw $s1,4($sp)
+sw $ra,0($sp) #saves the return adddress
+move $s1,$a0  #copies the current cell to the save register
+li $t7,80 # load the integer into the temporary register
+bge $s1,$t7,yes #if the number of coutner reaches 81 then sudoku is complete and it's solved
+lb $t5,sudkou+0($s1)#load the value in the cell to temporary register
+li $s2,10
+beq $t5,$zero,x #if the value in the cell is zero then go to the branch x
+addi $a0,$a0,1 #increase the cekk
+jal input #go back to the function again
+back: 
+lw $ra,0($sp)#restore the return address
+lw $s1,4($sp)
+lw $s2,8($sp)
+add $sp,$sp,12 #close the stack
+jr $ra #return back
+yes:
+li $v0,1#if the sudkou is solved then store one into the temporary register
+j back #go to back branch
+no:
+sb $zero, sudkou+0($s1)
+li $v0,0 #if the sudkou is not solvable then store zero into the temporary register
+j back   #go to back branch                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+x:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+li $t1,9#board size 
+div $s1,$t1#divde the current cell number to find the row and column 
+mfhi $a1 #column
+mflo $a2 #row
+addi $s2,$s2,-1 #start guessing the sudkou board by number 9 and down
+li $t1,0
+beq $s2,$t1,no ##guesing has to be above zero so if it's zero then it's not solvable
+move $a0,$s2
+jal test #checks if the guessing number work
+bnez $v1,x #if vo is zero then the number  work
+sb $s2,sudkou+0($s1) #stoe the guessing number into the cell
+addi $a0,$s1,1 # increase the counter of number of cell
+jal input # start over again
+bne $v0,$zero,back#if sudkou is solvable then return back else go back to previous cell do it again
+j x
+
+
+test: #this function test if the number is posiible for the current cell
+addi $t0,$a1,8  #goes ndown to the cell
+col:#this branch check the columns of the sodkou
+lb $t5,sudkou+0($t0) #load the value in the cell to the temporary register
+beq $t5,$a0,error #if the value and guessung t=number are the same then the number doesn't work and it branches to error
+addi $t0,$t0,9 #goes down again
+li $t1,80 #load 81 to temporary register
+ble $t0,$t1,col #there are a total of 81 cells so it can not get more than that
+li $t3,9 #counter for row check
+mul $t0,$a2,$t3
+ #find the start of the row in which the cell belongs
+row: #this branch chech the row for which the cell bekongs in
+lb $t5,sudkou+0($t0) #load the value in the temporary register by the value in the cell
+beq $t5,$a0,error #if the value and guessung t=number are the same then the number doesn't work and it branches to error
+addi $t0,$t0,1 #goes to the next cell
+addi $t3,$t3,-1 #decrease the counter until it reaches 0 to stop row branch 
+bge $t3,$zero,row
+li $t7,3 #load 3 into the temprary register
+div $t0, $a1,$t7 #divide the column by 3
+li $t7,27 
+mul $t0, $t0, $t7 #times the column by 27      
+li $t7,3       
+div $t1,$a2,$t7 #divide the row by 3      
+mul $t1, $t1, $t7 
+add $t1, $t0, $t1 #add $t1 and $t2 register        
+li  $t0, 3    #load  3 into the reigste $t0 and $t3            
+li  $t3, 3                
+box: #check the 3*3 vox
+lb $t2, sudkou+0($t1)  #load the value in the cell to the temporary register
+beq $a0,$t2,error  #if the value to guee is same value in the cell then the sudoku is not solvable
+addi $t3,$t3,-1     #decrease the counter until it reaches zero     
+beq $t3,$zero,end
+addi $t1, $t1,1   #go to the next cell         
+j box     #go back ti branc box again
+end:#check the last row of the matrix
+addi $t1,$t1,7          
+li $t3,3                
+addi $t0, $t0,-1#decrease the column counter       
+bnez $t0,box #go back to branch box agin if the register $t0 is no zero
+j work
+error:
+li $v1,1 #Load the 1 into the v0 if the sudoku is not solvable
+out:
+jr $ra #go back to the orginal function
+work: 
+li $v1,0 #Load the 0 into the v0 if the sudoku is solvable
+j out  #go to the branch out
+
+update:
+la $t1,sudkou
+li $t3,1
+li $t4,9 #load 9 into $t4
+loop:
+li $t2,1 #Load 1 into register t2 and t3
+loop2:
+lb $a0,($t1)  #print the first number in the sudkou         
+li $v0, 1                
+syscall
+addi $t1,$t1,1 #go to the next cekk
+addi $t2,$t2,1 #increas the counter
+ble $t2,$t4,loop2 #if the counter reaches 9 then the row is comple ,if not then keep the cell in the same row
+addi $t3,$t3,1 #increase the counter for column
+addi $a0, $0, 0xA #ascii code for LF, if you have any trouble try 0xD for CR.
+addi $v0, $0, 0xB #syscall 11 prints the lower 8 bits of $a0 as an ascii character.
+syscall
+la $a0,seperator #print a seperating line between rows
+li $v0,4
+syscall
+addi $t3,$t3,1 #increase the counter for column
+addi $a0, $0, 0xA #ascii code for LF, if you have any trouble try 0xD for CR.
+addi $v0, $0, 0xB #syscall 11 prints the lower 8 bits of $a0 as an ascii character.
+syscall
+ble $t3,$t4,loop  #if the counter reaches 9 then the columns are comple ,if not then keep printing ros
+exit:
+li  $v0,10 
+syscall
+
+
